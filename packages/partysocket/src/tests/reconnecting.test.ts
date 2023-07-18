@@ -938,3 +938,61 @@ testDone("reconnect after closing", (done, fail) => {
     }
   });
 });
+
+testDone("url provider throwing should retry", (done, fail) => {
+  let i = 0;
+  function provider() {
+    if (i !== 3) {
+      i++;
+      throw new Error("test error");
+    }
+    return URL;
+  }
+
+  const ws = new ReconnectingWebSocket(provider, undefined, {
+    minReconnectionDelay: 100,
+    maxReconnectionDelay: 200,
+  });
+
+  ws.addEventListener("error", (event) => {
+    if (event.error.message !== "test error") {
+      console.error("hello?", event.error.message);
+      console.error(typeof event.error);
+      fail(new Error("unexpected error"));
+    }
+  });
+
+  ws.addEventListener("open", () => {
+    done();
+    ws.close();
+  });
+});
+
+testDone("url provider rejecting should retry", (done, fail) => {
+  let i = 0;
+  async function provider() {
+    if (i !== 3) {
+      i++;
+      throw new Error("test error");
+    }
+    return URL;
+  }
+
+  const ws = new ReconnectingWebSocket(provider, undefined, {
+    minReconnectionDelay: 100,
+    maxReconnectionDelay: 200,
+  });
+
+  ws.addEventListener("error", (event) => {
+    if (event.error.message !== "test error") {
+      console.error("hello?", event.error.message);
+      console.error(typeof event.error);
+      fail(new Error("unexpected error"));
+    }
+  });
+
+  ws.addEventListener("open", () => {
+    done();
+    ws.close();
+  });
+});

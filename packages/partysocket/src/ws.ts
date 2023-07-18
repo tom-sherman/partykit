@@ -62,6 +62,10 @@ function isWebSocket(w: unknown): w is WebSocket {
 }
 
 function cloneEvent(e: Event) {
+  if (e instanceof ErrorEvent || e instanceof CloseEvent) {
+    // No need to clone these ones as they're our own errors
+    return e;
+  }
   return new (e as any).constructor(e.type, e) as Event;
 }
 
@@ -445,13 +449,13 @@ export default class ReconnectingWebSocket extends (EventTarget as TypedEventTar
       // via https://github.com/pladaria/reconnecting-websocket/pull/166
       .catch((err) => {
         this._connectLock = false;
-        this._handleError(new Events.ErrorEvent(Error(err.message), this));
+        this._handleError(new Events.ErrorEvent(new Error(err.message), this));
       });
   }
 
   private _handleTimeout() {
     this._debug("timeout event");
-    this._handleError(new Events.ErrorEvent(Error("TIMEOUT"), this));
+    this._handleError(new Events.ErrorEvent(new Error("TIMEOUT"), this));
   }
 
   private _disconnect(code = 1000, reason?: string) {
